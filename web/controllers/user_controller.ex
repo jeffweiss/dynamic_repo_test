@@ -30,9 +30,10 @@ defmodule MyApp.UserController do
 
   def show(conn, %{"id" => id}) do
     repo_name = Module.concat(MyApp, "User#{id}Repo")
-    Application.put_env(:my_app, repo_name, [adapter: Ecto.Adapters.Postgres, database: "my_app_dev", hostname: "localhost", pool_size: 10])
-    IO.inspect Application.get_env(:my_app, repo_name)
-    Code.compile_string("defmodule #{repo_name}, do: use Ecto.Repo, otp_app: :my_app")
+    unless Code.ensure_loaded?(repo_name) do
+      Application.put_env(:my_app, repo_name, [adapter: Ecto.Adapters.Postgres, database: "my_app_dev", hostname: "localhost", pool_size: 10])
+      Code.compile_string("defmodule #{repo_name}, do: use Ecto.Repo, otp_app: :my_app")
+    end
     repo_name.start_link(username: "jeff", password: "postgres")
     user = repo_name.get!(User, id)
     render(conn, "show.html", user: user)
